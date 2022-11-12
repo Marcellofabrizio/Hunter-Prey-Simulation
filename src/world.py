@@ -17,6 +17,7 @@ class World():
         self.cols = 20
         self.size = 30
         self.piece_size = 15
+        self.line_size = 2
         self.w = self.size * self.cols
         self.h = self.size * self.rows
         self.screen = pygame.display.set_mode((self.w, self.h))
@@ -42,7 +43,7 @@ class World():
         lines = itertools.chain(self.row_lines(), self.col_lines())
 
         for start, end in lines:
-            pygame.draw.line(self.screen, Colors.BLACK, start, end, 3)
+            pygame.draw.line(self.screen, Colors.BLACK, start, end, self.line_size)
 
     def draw_background(self):
         rect = pygame.Rect(0, 0, self.w, self.h)
