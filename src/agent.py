@@ -3,6 +3,8 @@ import random
 from enum import Enum
 from numpy import array
 
+from utils import Colors
+
 class AgentStates(Enum):
     wander = 0
     flee = 1
@@ -31,14 +33,31 @@ class Agent():
             self.dir_vector = new_dir
             self.move()
 
+    def color(self):
+        if self.state == AgentStates.flee:
+            return Colors.YELLOW
+        elif self.state == AgentStates.hunt:
+            return Colors.RED
+
 class Hunter(Agent):
 
     def __init__(self, life, state, pos):
       super().__init__(life,state,pos)  
+
+    def color(self):
+        if self.state == AgentStates.wander:
+            return Colors.BLUE
+        else:
+            return super().color()
 
 class Prey(Agent):
 
     def __init__(self, life, state, pos):
       super().__init__(life,state,pos)  
 
+    def color(self):
+        if self.state == AgentStates.wander:
+            return Colors.GREEN
+        else:
+            return super().color()
 

@@ -2,12 +2,9 @@ import pygame
 import itertools
 import numpy as np
 
-SCREEN_SIZE = 500
+from utils import Colors
 
-class Colors():
-    WHITE = (255,255,255)
-    BLACK = (  0,  0,  0)
-    BLUE  = ( 80, 80,192)
+SCREEN_SIZE = 500
 
 class World():
 
@@ -71,7 +68,7 @@ class World():
     def draw_agents(self):
         for agent in self.agents:
             x, y = (agent.pos[0] * self.size + self.size//2, agent.pos[1] * self.size + self.size//2)
-            pygame.draw.rect(self.screen, Colors.BLUE, (x+self.line_size, y+self.line_size, 
+            pygame.draw.rect(self.screen, agent.color(), (x+self.line_size, y+self.line_size, 
                                                         self.size-self.line_size, self.size-self.line_size))
 
         pygame.display.update()
