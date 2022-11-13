@@ -1,11 +1,13 @@
 import pygame
 import itertools
+import numpy as np
 
 SCREEN_SIZE = 500
 
 class Colors():
     WHITE = (255,255,255)
     BLACK = (  0,  0,  0)
+    BLUE  = ( 80, 80,192)
 
 class World():
 
@@ -21,6 +23,8 @@ class World():
         self.w = self.size * self.cols
         self.h = self.size * self.rows
         self.screen = pygame.display.set_mode((self.w, self.h))
+        self.agents = list()
+        self.env_array = np.array([[None for i in range(self.rows)] for j in range(self.cols)])
 
     def draw_screen(self):
         scale = 20
@@ -56,8 +60,25 @@ class World():
 
     def start_world(self):
         self.draw_board()
-
+        print(len(self.agents))
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
+            
+            self.draw_agents()
+
+    def draw_agents(self):
+        for agent in self.agents:
+            x, y = (agent.pos[0] * self.size + self.size//2, agent.pos[1] * self.size + self.size//2)
+            pygame.draw.rect(self.screen, Colors.BLUE, (x+self.line_size, y+self.line_size, 
+                                                        self.size-self.line_size, self.size-self.line_size))
+
+        pygame.display.update()
+
+    def add_agent(self, agent):
+        agent.world = self
+        self.agents.append(agent)
+
+    def is_free(self, pos):
+        return self.env_array[pos] != None
