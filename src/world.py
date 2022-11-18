@@ -6,11 +6,13 @@ from utils import Colors
 
 SCREEN_SIZE = 500
 
+
 class World():
 
     def __init__(self):
         pygame.init()
         pygame.display.set_caption("Hunter-Prey")
+        self.fpsClock = pygame.time.Clock()
 
         self.rows = 20
         self.cols = 20
@@ -21,7 +23,8 @@ class World():
         self.h = self.size * self.rows
         self.screen = pygame.display.set_mode((self.w, self.h))
         self.agents = list()
-        self.env_array = np.array([[None for i in range(self.rows)] for j in range(self.cols)])
+        self.env_array = np.array(
+            [[None for i in range(self.rows)] for j in range(self.cols)])
 
     def draw_screen(self):
         scale = 20
@@ -44,7 +47,8 @@ class World():
         lines = itertools.chain(self.row_lines(), self.col_lines())
 
         for start, end in lines:
-            pygame.draw.line(self.screen, Colors.BLACK, start, end, self.line_size)
+            pygame.draw.line(self.screen, Colors.BLACK,
+                             start, end, self.line_size)
 
     def draw_background(self):
         rect = pygame.Rect(0, 0, self.w, self.h)
@@ -62,14 +66,26 @@ class World():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-            
+
+            self.move_agents()
             self.draw_agents()
+            self.fpsClock.tick(5)
+
+    def move_agents(self):
+        for agent in self.agents:
+            prev_pos = agent.pos
+            agent.move()
+            x, y = (prev_pos[0] * self.size + self.size//2,
+                    prev_pos[1] * self.size + self.size//2)
+            pygame.draw.rect(self.screen, Colors.WHITE, (x+self.line_size, y+self.line_size,
+                                                          self.size-self.line_size, self.size-self.line_size))
 
     def draw_agents(self):
         for agent in self.agents:
-            x, y = (agent.pos[0] * self.size + self.size//2, agent.pos[1] * self.size + self.size//2)
-            pygame.draw.rect(self.screen, agent.color(), (x+self.line_size, y+self.line_size, 
-                                                        self.size-self.line_size, self.size-self.line_size))
+            x, y = (agent.pos[0] * self.size + self.size//2,
+                    agent.pos[1] * self.size + self.size//2)
+            pygame.draw.rect(self.screen, agent.color(), (x+self.line_size, y+self.line_size,
+                                                          self.size-self.line_size, self.size-self.line_size))
 
         pygame.display.update()
 
@@ -78,4 +94,7 @@ class World():
         self.agents.append(agent)
 
     def is_free(self, pos):
-        return self.env_array[pos] != None
+        print(self.w, self.h)
+        x, y = (pos[0] % len(self.env_array), pos[1] % len(self.env_array[0]))
+        print(x, y)
+        return self.env_array[x, y] == None

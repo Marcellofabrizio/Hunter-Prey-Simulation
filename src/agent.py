@@ -17,19 +17,21 @@ class Agent():
         self.life = life
         self.state = state
         self.pos = array(pos)
-        self.dir_vector = array([0,0])
         self.possible_moves = [array([0,1]), array([0,-1]), 
                                array([1,0]), array([-1,0])]
+        self.dir_vector = random.choice(self.possible_moves)
 
     def move(self):
+        print(self.dir_vector)
         new_pos = self.pos + self.dir_vector
         if self.world.is_free(new_pos):
             x, y = new_pos
             self.pos = array([x%self.world.w, y%self.world.h])
+            return
         else:
-            new_dir = random.choise(self.possible_moves)
-            while new_dir == self.dir_vector:
-                new_dir = random.choise(self.possible_moves)
+            new_dir = random.choice(self.possible_moves)
+            while (new_dir==self.dir_vector).all() == True:
+                new_dir = random.choice(self.possible_moves)
             self.dir_vector = new_dir
             self.move()
 
