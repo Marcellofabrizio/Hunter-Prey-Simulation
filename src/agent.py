@@ -28,15 +28,7 @@ class Agent():
             x, y = new_pos
             self.pos = array([x%self.world.cols, y%self.world.rows])
             return
-        # else:
-        #     print("Not free")
-        #     new_dir = random.choice(self.possible_moves)
-        #     while (new_dir==self.dir_vector).all() == True:
-        #         new_dir = random.choice(self.possible_moves)
-        #     self.dir_vector = new_dir
-        #     self.move()
 
-        # while not self.world.is_free(new_pos):
         elif self.state == AgentStates.wander:
             new_dir = random.choice(self.possible_moves)
             new_pos = self.pos + new_dir
