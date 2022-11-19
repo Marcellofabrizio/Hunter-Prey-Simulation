@@ -5,7 +5,7 @@ import numpy as np
 from utils import Colors
 
 SCREEN_SIZE = 500
-
+FPS = 3
 
 class World():
 
@@ -34,14 +34,14 @@ class World():
     def row_lines(self):
         half_size = self.size//2
 
-        for y in range(half_size, self.h - half_size + self.size, self.size):
-            yield (half_size, y), (self.w-half_size, y)
+        for y in range(0, self.h + self.size, self.size):
+            yield (0, y), (self.w, y)
 
     def col_lines(self):
         half_size = self.size//2
 
-        for x in range(half_size, self.w - half_size + self.size, self.size):
-            yield (x, half_size), (x, self.h-half_size)
+        for x in range(0, self.w + self.size, self.size):
+            yield (x, 0), (x, self.h)
 
     def draw_lines(self):
         lines = itertools.chain(self.row_lines(), self.col_lines())
@@ -61,7 +61,6 @@ class World():
 
     def start_world(self):
         self.draw_board()
-        print(len(self.agents))
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -69,21 +68,27 @@ class World():
 
             self.move_agents()
             self.draw_agents()
-            self.fpsClock.tick(5)
+            self.fpsClock.tick(FPS)
 
     def move_agents(self):
         for agent in self.agents:
             prev_pos = agent.pos
             agent.move()
-            x, y = (prev_pos[0] * self.size + self.size//2,
-                    prev_pos[1] * self.size + self.size//2)
+            x, y = (prev_pos[0] * self.size,
+                    prev_pos[1] * self.size)
+
+            new_env_x, new_env_y = (agent.pos[0] % len(self.env_array), agent.pos[1] % len(self.env_array[0]))
+            old_env_x, old_env_y = (prev_pos[0] % len(self.env_array), prev_pos[1] % len(self.env_array[0]))
+            self.env_array[new_env_x, new_env_y] = agent
+            self.env_array[old_env_x, old_env_y] = None
+
             pygame.draw.rect(self.screen, Colors.WHITE, (x+self.line_size, y+self.line_size,
                                                           self.size-self.line_size, self.size-self.line_size))
 
     def draw_agents(self):
         for agent in self.agents:
-            x, y = (agent.pos[0] * self.size + self.size//2,
-                    agent.pos[1] * self.size + self.size//2)
+            x, y = (agent.pos[0] * self.size,
+                    agent.pos[1] * self.size)
             pygame.draw.rect(self.screen, agent.color(), (x+self.line_size, y+self.line_size,
                                                           self.size-self.line_size, self.size-self.line_size))
 
@@ -94,7 +99,5 @@ class World():
         self.agents.append(agent)
 
     def is_free(self, pos):
-        print(self.w, self.h)
         x, y = (pos[0] % len(self.env_array), pos[1] % len(self.env_array[0]))
-        print(x, y)
         return self.env_array[x, y] == None
