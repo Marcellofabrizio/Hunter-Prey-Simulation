@@ -77,8 +77,8 @@ class World():
             x, y = (prev_pos[0] * self.size,
                     prev_pos[1] * self.size)
 
-            new_env_x, new_env_y = (agent.pos[0] % len(self.env_array), agent.pos[1] % len(self.env_array[0]))
-            old_env_x, old_env_y = (prev_pos[0] % len(self.env_array), prev_pos[1] % len(self.env_array[0]))
+            new_env_x, new_env_y = self.get_env_pos(agent.pos)
+            old_env_x, old_env_y = self.get_env_pos(prev_pos)
             self.env_array[new_env_x, new_env_y] = agent
             self.env_array[old_env_x, old_env_y] = None
 
@@ -101,3 +101,7 @@ class World():
     def is_free(self, pos):
         x, y = (pos[0] % len(self.env_array), pos[1] % len(self.env_array[0]))
         return self.env_array[x, y] == None
+
+    def get_env_pos(self, pos):
+        x, y = pos
+        return np.array([x%self.cols, y%self.rows])

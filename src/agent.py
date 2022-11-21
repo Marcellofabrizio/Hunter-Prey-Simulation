@@ -21,32 +21,37 @@ class Agent():
                                array([1,0]), array([-1,0])]
         self.dir_vector = random.choice(self.possible_moves)
 
+        self.emotion_quality = 0
+        self.emotion_intensity = 0
+        self.move_counter = 0
+
     def move(self):
         new_pos = self.pos + self.dir_vector
-        if self.world.is_free(new_pos) and self.state != AgentStates.wander:
+        if self.move_counter < 10 or (self.world.is_free(new_pos) and self.state != AgentStates.wander):
             print(self.state)
-            x, y = new_pos
-            self.pos = array([x%self.world.cols, y%self.world.rows])
+            self.pos = self.world.get_env_pos(new_pos)
+            self.move_counter += 1
             return
 
-        elif self.state == AgentStates.wander:
+        elif self.move_counter >= 10 and self.state == AgentStates.wander:
             new_dir = random.choice(self.possible_moves)
             new_pos = self.pos + new_dir
-            print("New dir:", new_dir)
-            print("Previous:", self.pos)
-            print("New:",new_pos)
+            self.move_counter = 0
             if not self.world.is_free(new_pos):
                 return 
 
         self.dir_vector = new_dir
-        x, y = new_pos
-        self.pos = array([x%self.world.cols, y%self.world.rows])
+        self.pos = self.world.get_env_pos(new_pos)
+        self.move_counter += 1
 
     def color(self):
         if self.state == AgentStates.flee:
             return Colors.YELLOW
         elif self.state == AgentStates.hunt:
             return Colors.RED
+
+    def update_emotions(self):
+        pass
 
 class Hunter(Agent):
 
@@ -58,7 +63,7 @@ class Hunter(Agent):
             return Colors.BLUE
         else:
             return super().color()
-
+    
 class Prey(Agent):
 
     def __init__(self, life, state, pos):
