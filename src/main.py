@@ -22,7 +22,7 @@ def main():
     world.add_agent(hunter7)
     world.add_agent(hunter8)
     world.add_agent(prey1)
-    world.add_agent(prey2)
+    # world.add_agent(prey2)
     world.start_world()
 
 main()

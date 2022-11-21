@@ -99,8 +99,12 @@ class World():
         self.agents.append(agent)
 
     def is_free(self, pos):
-        x, y = (pos[0] % len(self.env_array), pos[1] % len(self.env_array[0]))
+        x, y = self.get_env_pos(pos)
         return self.env_array[x, y] == None
+
+    def get_env_value(self, pos):
+        x, y = self.get_env_pos(pos)
+        return self.env_array[x, y]
 
     def get_env_pos(self, pos):
         x, y = pos
