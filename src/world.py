@@ -26,6 +26,11 @@ class World():
         self.env_array = np.array(
             [[None for i in range(self.rows)] for j in range(self.cols)])
 
+    @property
+    def alive_agents(self):
+        print(len([a for a in self.agents if a.alive]))
+        return [a for a in self.agents if a.alive]
+
     def draw_screen(self):
         scale = 20
 
@@ -71,7 +76,7 @@ class World():
             self.fpsClock.tick(FPS)
 
     def move_agents(self):
-        for agent in self.agents:
+        for agent in self.alive_agents:
             prev_pos = agent.pos
             agent.move()
             x, y = (prev_pos[0] * self.size,
@@ -86,13 +91,18 @@ class World():
                                                           self.size-self.line_size, self.size-self.line_size))
 
     def draw_agents(self):
-        for agent in self.agents:
+        for agent in self.alive_agents:
+            print("Agent alive", agent.state)
             x, y = (agent.pos[0] * self.size,
                     agent.pos[1] * self.size)
             pygame.draw.rect(self.screen, agent.color(), (x+self.line_size, y+self.line_size,
                                                           self.size-self.line_size, self.size-self.line_size))
 
         pygame.display.update()
+
+    def kill_agent(self, agent):
+        self.env_array[agent.pos] = None
+        self.agents = self.alive_agents
 
     def add_agent(self, agent):
         agent.world = self
