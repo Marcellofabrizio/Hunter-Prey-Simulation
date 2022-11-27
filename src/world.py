@@ -7,6 +7,7 @@ from utils import Colors
 SCREEN_SIZE = 500
 FPS = 3
 
+
 class World():
 
     def __init__(self):
@@ -25,10 +26,11 @@ class World():
         self.agents = list()
         self.env_array = np.array(
             [[None for i in range(self.rows)] for j in range(self.cols)])
+        self.trace_array = np.array(
+            [[0 for i in range(self.rows)] for j in range(self.cols)])
 
     @property
     def alive_agents(self):
-        print(len([a for a in self.agents if a.alive]))
         return [a for a in self.agents if a.alive]
 
     def draw_screen(self):
@@ -88,17 +90,24 @@ class World():
             self.env_array[old_env_x, old_env_y] = None
 
             pygame.draw.rect(self.screen, Colors.WHITE, (x+self.line_size, y+self.line_size,
-                                                          self.size-self.line_size, self.size-self.line_size))
+                                                         self.size-self.line_size, self.size-self.line_size))
+            
+        self.decrease_traces()
 
     def draw_agents(self):
         for agent in self.alive_agents:
-            print("Agent alive", agent.state)
             x, y = (agent.pos[0] * self.size,
                     agent.pos[1] * self.size)
             pygame.draw.rect(self.screen, agent.color(), (x+self.line_size, y+self.line_size,
                                                           self.size-self.line_size, self.size-self.line_size))
 
         pygame.display.update()
+
+    def decrease_traces(self):
+        for x in range(0, self.cols):
+            for y in range(0, self.rows):
+                if self.trace_array[x, y] > 0:
+                    self.trace_array[x, y] = self.trace_array[x, y] - 1
 
     def kill_agent(self, agent):
         self.env_array[agent.pos] = None
@@ -118,4 +127,13 @@ class World():
 
     def get_env_pos(self, pos):
         x, y = pos
-        return np.array([x%self.cols, y%self.rows])
+        return np.array([x % self.cols, y % self.rows])
+
+    def get_trace_value(self, pos):
+        x, y = self.get_env_pos(pos)
+        return self.trace_array[x, y]
+
+    def set_trace_value(self, pos, value):
+        x, y = self.get_env_pos(pos)
+        self.trace_array[x, y] = value
+        print(self.trace_array)
