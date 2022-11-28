@@ -111,7 +111,7 @@ class World():
 
     def kill_agent(self, agent):
         self.env_array[agent.pos] = None
-        self.agents = self.alive_agents
+        self.agents.remove(agent)
 
     def add_agent(self, agent):
         agent.world = self

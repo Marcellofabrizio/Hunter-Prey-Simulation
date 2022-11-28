@@ -68,13 +68,16 @@ class Agent():
                             "pos": pos
                         })
 
-                traces.sort(key=lambda x: x["trace"])
+                traces.sort(key=lambda x: x["trace"], reverse=True)
                 most_recent_trace = traces[0]
                 if most_recent_trace["trace"] > 0:
                     new_pos = most_recent_trace["pos"]
+                else:
+                    new_dir = random.choice(self.possible_moves)
+                    new_pos = self.pos + new_dir
 
             else:
-                self.world.set_trace_value(new_pos,10)
+                self.world.set_trace_value(new_pos, 10)
 
             self.pos = self.world.get_env_pos(new_pos)
             self.move_counter += 1
@@ -105,7 +108,7 @@ class Agent():
             for j in range(-1*radius, radius+1, 1):
                 if i != 0 and j != 0:
                     agent = self.world.get_env_value(
-                        (i+self.pos[0], j+self.pos[1]))
+                        (self.pos[0]+i, self.pos[1]+j))
 
                     if agent != None:
                         close_agents.append(agent)
@@ -161,6 +164,7 @@ class Prey(Agent):
         super().__init__(life, state, pos, move_limit)
         self.radius = 3
         self.death_radius = 3
+        self.no_pred_count = 0
 
     def color(self):
         if self.state == AgentStates.wander:
@@ -179,21 +183,37 @@ class Prey(Agent):
             if len(hunters) > 2:
                 self.state = AgentStates.dead
                 self.world.kill_agent(self)
+                return
 
-            for agent in close_agents:
-                if isinstance(agent, Hunter):
+            if len(hunters) == 0:
+                self.no_pred_count += 1
+            else:
+                self.no_pred_count = 0
 
-                    if any(agent.dir_vector*-1 == self.dir_vector):
-                        self.dir_vector = agent.dir_vector
-                    else:
-                        self.dir_vector = agent.dir_vector*-1
+            for agent in hunters:
+                self.emotion_quality = self.emotion_quality_lo_limit
+                self.emotion_intensity = self.emotion_intensity_hi_limit
 
-                elif isinstance(agent, Prey):
-                    if agent.state == AgentStates.flee:
-                        self.emotion_quality = max(
-                            self.emotion_quality-1, self.emotion_quality_lo_limit)
-                        self.emotion_intensity = min(
-                            self.emotion_intensity+1, self.emotion_intensity_hi_limit)
+                if any(agent.dir_vector*-1 == self.dir_vector):
+                    self.dir_vector = agent.dir_vector
+                else:
+                    self.dir_vector = agent.dir_vector*-1
+
+            for agent in preys:
+                if agent.state == AgentStates.flee:
+                    self.emotion_quality = max(
+                        self.emotion_quality-1, self.emotion_quality_lo_limit)
+                    self.emotion_intensity = min(
+                        self.emotion_intensity+1, self.emotion_intensity_hi_limit)
+                else:
+                    self.emotion_quality = max(self.emotion_quality+1, self.emotion_quality_hi_limit)
+
+            if self.no_pred_count == 10:
+                self.emotion_quality = 1
+                self.emotion_intensity = 1
 
             if self.emotion_quality < 0:
                 self.state = AgentStates.flee
+
+            if self.emotion_quality > 1:
+                self.state = AgentStates.wander
