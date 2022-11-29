@@ -79,6 +79,9 @@ class Agent():
             else:
                 self.world.set_trace_value(new_pos, 10)
 
+            if not self.world.is_free(new_pos):
+                return
+
             self.pos = self.world.get_env_pos(new_pos)
             self.move_counter += 1
             return
@@ -86,15 +89,15 @@ class Agent():
         elif self.move_counter >= self.move_limit and self.state == AgentStates.wander:
             new_dir = random.choice(self.possible_moves)
             new_pos = self.pos + new_dir
-            self.move_counter = 0
             if not self.world.is_free(new_pos):
                 return
+            self.move_counter = 0
 
         self.dir_vector = new_dir
         self.pos = self.world.get_env_pos(new_pos)
         self.move_counter += 1
 
-        self.check_surroundings()
+        # self.check_surroundings()
 
     def color(self):
         if self.state == AgentStates.flee:
@@ -131,6 +134,39 @@ class Hunter(Agent):
         else:
             return super().color()
 
+    def move(self):
+
+        new_pos = self.pos + self.dir_vector
+        
+        if self.state == AgentStates.hunt:
+            traces = []
+            for move in self.possible_moves:
+                pos = self.pos + move
+                traces.append(
+                    {
+                        "trace": self.world.get_trace_value(pos),
+                        "pos": pos
+                    })
+            traces.sort(key=lambda x: x["trace"], reverse=True)
+            most_recent_trace = traces[0]
+            if most_recent_trace["trace"] > 0:
+                new_pos = most_recent_trace["pos"]
+            else:
+                new_dir = random.choice(self.possible_moves)
+                new_pos = self.pos + new_dir
+
+        else:
+            if self.move_counter < self.move_limit:
+                new_dir = random.choice(self.possible_moves)
+            
+            else: 
+                new_pos = self.pos + new_dir
+                if not self.world.is_free(new_pos):
+                    return
+                self.move_counter = 0
+
+        # if not self.world.is_free():
+
     def check_surroundings(self):
         close_agents = self.get_close_agents(self.radius)
 
@@ -142,7 +178,7 @@ class Hunter(Agent):
             if len(preys) == 0:
                 self.emotion_intensity -= 1
 
-            for agent in close_agents:
+            for agent in preys:
                 if isinstance(agent, Prey) and agent.state != AgentStates.dead:
 
                     if any(agent.dir_vector*-1 == self.dir_vector):
@@ -206,7 +242,8 @@ class Prey(Agent):
                     self.emotion_intensity = min(
                         self.emotion_intensity+1, self.emotion_intensity_hi_limit)
                 else:
-                    self.emotion_quality = max(self.emotion_quality+1, self.emotion_quality_hi_limit)
+                    self.emotion_quality = max(
+                        self.emotion_quality+1, self.emotion_quality_hi_limit)
 
             if self.no_pred_count == 10:
                 self.emotion_quality = 1

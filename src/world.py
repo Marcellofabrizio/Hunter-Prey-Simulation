@@ -5,7 +5,7 @@ import numpy as np
 from utils import Colors
 
 SCREEN_SIZE = 500
-FPS = 3
+FPS = 1
 
 
 class World():
@@ -94,12 +94,22 @@ class World():
             
         self.decrease_traces()
 
+
     def draw_agents(self):
-        for agent in self.alive_agents:
-            x, y = (agent.pos[0] * self.size,
-                    agent.pos[1] * self.size)
-            pygame.draw.rect(self.screen, agent.color(), (x+self.line_size, y+self.line_size,
-                                                          self.size-self.line_size, self.size-self.line_size))
+        for i in range(self.cols):
+            for j in range(self.rows):
+                agent = self.env_array[i, j]
+                if agent == None:
+                    continue
+
+                if not agent.alive:
+                    self.env_array[i, j] = None
+                    continue 
+
+                x, y = (agent.pos[0] * self.size,
+                         agent.pos[1] * self.size)
+                pygame.draw.rect(self.screen, agent.color(), (x+self.line_size, y+self.line_size,
+                                                               self.size-self.line_size, self.size-self.line_size))
 
         pygame.display.update()
 
@@ -119,6 +129,7 @@ class World():
 
     def is_free(self, pos):
         x, y = self.get_env_pos(pos)
+        print(x,y,self.env_array[x, y] == None)
         return self.env_array[x, y] == None
 
     def get_env_value(self, pos):
@@ -136,4 +147,3 @@ class World():
     def set_trace_value(self, pos, value):
         x, y = self.get_env_pos(pos)
         self.trace_array[x, y] = value
-        print(self.trace_array)
