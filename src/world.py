@@ -5,7 +5,7 @@ import numpy as np
 from utils import Colors
 
 SCREEN_SIZE = 500
-FPS = 1
+FPS = 3
 
 
 class World():
@@ -80,7 +80,9 @@ class World():
     def move_agents(self):
         for agent in self.alive_agents:
             prev_pos = agent.pos
-            agent.move()
+            if not agent.move():
+                continue
+            
             x, y = (prev_pos[0] * self.size,
                     prev_pos[1] * self.size)
 
@@ -129,7 +131,6 @@ class World():
 
     def is_free(self, pos):
         x, y = self.get_env_pos(pos)
-        print(x,y,self.env_array[x, y] == None)
         return self.env_array[x, y] == None
 
     def get_env_value(self, pos):

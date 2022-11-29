@@ -49,53 +49,35 @@ class Agent():
         return self.state != AgentStates.dead
 
     def move(self):
-        new_pos = self.pos + self.dir_vector
+        pass
+        # new_pos = self.pos + self.dir_vector
 
-        self.check_surroundings()
+        # self.check_surroundings()
 
-        if not self.world.is_free(new_pos):
-            return
+        # if not self.world.is_free(new_pos):
+        #     return
 
-        if self.move_counter < self.move_limit or self.state != AgentStates.wander:
+        # if self.move_counter < self.move_limit or self.state != AgentStates.wander:
 
-            if self.state == AgentStates.hunt:
-                traces = []
-                for move in self.possible_moves:
-                    pos = self.pos + move
-                    traces.append(
-                        {
-                            "trace": self.world.get_trace_value(pos),
-                            "pos": pos
-                        })
+        #     self.world.set_trace_value(new_pos, 10)
 
-                traces.sort(key=lambda x: x["trace"], reverse=True)
-                most_recent_trace = traces[0]
-                if most_recent_trace["trace"] > 0:
-                    new_pos = most_recent_trace["pos"]
-                else:
-                    new_dir = random.choice(self.possible_moves)
-                    new_pos = self.pos + new_dir
+        #     if not self.world.is_free(new_pos):
+        #         return
 
-            else:
-                self.world.set_trace_value(new_pos, 10)
+        #     self.pos = self.world.get_env_pos(new_pos)
+        #     self.move_counter += 1
+        #     return
 
-            if not self.world.is_free(new_pos):
-                return
+        # elif self.move_counter >= self.move_limit and self.state == AgentStates.wander:
+        #     new_dir = random.choice(self.possible_moves)
+        #     new_pos = self.pos + new_dir
+        #     if not self.world.is_free(new_pos):
+        #         return
+        #     self.move_counter = 0
 
-            self.pos = self.world.get_env_pos(new_pos)
-            self.move_counter += 1
-            return
-
-        elif self.move_counter >= self.move_limit and self.state == AgentStates.wander:
-            new_dir = random.choice(self.possible_moves)
-            new_pos = self.pos + new_dir
-            if not self.world.is_free(new_pos):
-                return
-            self.move_counter = 0
-
-        self.dir_vector = new_dir
-        self.pos = self.world.get_env_pos(new_pos)
-        self.move_counter += 1
+        # self.dir_vector = new_dir
+        # self.pos = self.world.get_env_pos(new_pos)
+        # self.move_counter += 1
 
         # self.check_surroundings()
 
@@ -157,16 +139,24 @@ class Hunter(Agent):
 
         else:
             if self.move_counter < self.move_limit:
-                new_dir = random.choice(self.possible_moves)
+                self.dir_vector = random.choice(self.possible_moves)
             
-            else: 
-                new_pos = self.pos + new_dir
-                if not self.world.is_free(new_pos):
-                    return
+            else:
                 self.move_counter = 0
 
-        # if not self.world.is_free():
+            new_pos = self.pos + self.dir_vector
+            
 
+        if not self.world.is_free(new_pos):
+            print("Collision detected")
+            return False
+        
+        self.pos = self.world.get_env_pos(new_pos)
+        self.check_surroundings()
+
+        return True
+        
+        
     def check_surroundings(self):
         close_agents = self.get_close_agents(self.radius)
 
@@ -208,6 +198,26 @@ class Prey(Agent):
         else:
             return super().color()
 
+    def move(self):
+        new_pos = self.pos + self.dir_vector
+
+        if self.state != AgentStates.flee:
+            if self.move_counter < self.move_limit:
+                self.dir_vector = random.choice(self.possible_moves)
+
+            else:
+                self.move_counter = 0
+
+            new_pos = self.pos + self.dir_vector
+
+        if not self.world.is_free(new_pos):
+            print("Collision detected")
+            return False
+
+        self.pos = self.world.get_env_pos(new_pos)
+        self.check_surroundings()
+        return True
+        
     def check_surroundings(self):
         close_agents = self.get_close_agents(self.radius)
 
