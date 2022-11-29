@@ -82,7 +82,7 @@ class World():
             prev_pos = agent.pos
             if not agent.move():
                 continue
-            
+
             x, y = (prev_pos[0] * self.size,
                     prev_pos[1] * self.size)
 
@@ -122,6 +122,7 @@ class World():
                     self.trace_array[x, y] = self.trace_array[x, y] - 1
 
     def kill_agent(self, agent):
+        print("The hunter feasts uppon the flesh. Blood for the Blood god")
         self.env_array[agent.pos] = None
         self.agents.remove(agent)
 

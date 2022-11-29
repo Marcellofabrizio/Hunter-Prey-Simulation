@@ -26,8 +26,7 @@ class AgentStates(Enum):
 
 class Agent():
 
-    def __init__(self, life, state, pos, move_limit):
-        self.life = life
+    def __init__(self, state, pos, move_limit):
         self.state = state
         self.pos = array(pos)
         self.possible_moves = [array([0, 1]), array([0, -1]),
@@ -50,36 +49,6 @@ class Agent():
 
     def move(self):
         pass
-        # new_pos = self.pos + self.dir_vector
-
-        # self.check_surroundings()
-
-        # if not self.world.is_free(new_pos):
-        #     return
-
-        # if self.move_counter < self.move_limit or self.state != AgentStates.wander:
-
-        #     self.world.set_trace_value(new_pos, 10)
-
-        #     if not self.world.is_free(new_pos):
-        #         return
-
-        #     self.pos = self.world.get_env_pos(new_pos)
-        #     self.move_counter += 1
-        #     return
-
-        # elif self.move_counter >= self.move_limit and self.state == AgentStates.wander:
-        #     new_dir = random.choice(self.possible_moves)
-        #     new_pos = self.pos + new_dir
-        #     if not self.world.is_free(new_pos):
-        #         return
-        #     self.move_counter = 0
-
-        # self.dir_vector = new_dir
-        # self.pos = self.world.get_env_pos(new_pos)
-        # self.move_counter += 1
-
-        # self.check_surroundings()
 
     def color(self):
         if self.state == AgentStates.flee:
@@ -106,8 +75,8 @@ class Agent():
 
 class Hunter(Agent):
 
-    def __init__(self, life, state, pos, move_limit):
-        super().__init__(life, state, pos, move_limit)
+    def __init__(self, state, pos, move_limit):
+        super().__init__(state, pos, move_limit)
         self.radius = 3
 
     def color(self):
@@ -119,7 +88,7 @@ class Hunter(Agent):
     def move(self):
 
         new_pos = self.pos + self.dir_vector
-        
+
         if self.state == AgentStates.hunt:
             traces = []
             for move in self.possible_moves:
@@ -138,25 +107,21 @@ class Hunter(Agent):
                 new_pos = self.pos + new_dir
 
         else:
-            if self.move_counter < self.move_limit:
+            if self.move_counter >= self.move_limit: 
                 self.dir_vector = random.choice(self.possible_moves)
-            
-            else:
                 self.move_counter = 0
-
+                
             new_pos = self.pos + self.dir_vector
-            
 
         if not self.world.is_free(new_pos):
-            print("Collision detected")
             return False
-        
+
+        self.move_counter += 1
         self.pos = self.world.get_env_pos(new_pos)
         self.check_surroundings()
 
         return True
-        
-        
+
     def check_surroundings(self):
         close_agents = self.get_close_agents(self.radius)
 
@@ -169,16 +134,16 @@ class Hunter(Agent):
                 self.emotion_intensity -= 1
 
             for agent in preys:
-                if isinstance(agent, Prey) and agent.state != AgentStates.dead:
+                if any(agent.dir_vector*-1 == self.dir_vector):
+                    self.dir_vector = agent.dir_vector
+                else:
+                    self.dir_vector = agent.dir_vector*-1
 
-                    if any(agent.dir_vector*-1 == self.dir_vector):
-                        self.dir_vector = agent.dir_vector
-                    else:
-                        self.dir_vector = agent.dir_vector*-1
+                self.emotion_quality = self.emotion_quality_lo_limit
+                self.emotion_intensity = self.emotion_intensity_hi_limit
 
-                    self.emotion_quality = self.emotion_quality_lo_limit
-                    self.emotion_intensity = self.emotion_intensity_hi_limit
-                    self.state = AgentStates.hunt
+        if self.emotion_intensity > 0:
+            self.state = AgentStates.hunt
 
         if self.emotion_intensity == 0:
             self.state = AgentStates.wander
@@ -186,11 +151,12 @@ class Hunter(Agent):
 
 class Prey(Agent):
 
-    def __init__(self, life, state, pos, move_limit):
-        super().__init__(life, state, pos, move_limit)
+    def __init__(self, state, pos, move_limit):
+        super().__init__(state, pos, move_limit)
         self.radius = 3
         self.death_radius = 3
         self.no_pred_count = 0
+        self.no_pred_limit = 5
 
     def color(self):
         if self.state == AgentStates.wander:
@@ -202,65 +168,62 @@ class Prey(Agent):
         new_pos = self.pos + self.dir_vector
 
         if self.state != AgentStates.flee:
-            if self.move_counter < self.move_limit:
+            if self.move_counter >= self.move_limit:
                 self.dir_vector = random.choice(self.possible_moves)
-
-            else:
                 self.move_counter = 0
 
             new_pos = self.pos + self.dir_vector
 
         if not self.world.is_free(new_pos):
-            print("Collision detected")
             return False
 
+        self.move_counter += 1
         self.pos = self.world.get_env_pos(new_pos)
         self.check_surroundings()
         return True
-        
+
     def check_surroundings(self):
         close_agents = self.get_close_agents(self.radius)
+        preys = list(filter(lambda a: isinstance(a, Prey), close_agents))
+        hunters = list(
+            filter(lambda a: isinstance(a, Hunter), close_agents))
 
-        if len(close_agents) > 0 and self.alive:
-            preys = list(filter(lambda a: isinstance(a, Prey), close_agents))
-            hunters = list(
-                filter(lambda a: isinstance(a, Hunter), close_agents))
 
-            if len(hunters) > 2:
-                self.state = AgentStates.dead
-                self.world.kill_agent(self)
-                return
+        if len(hunters) > 3:
+            self.state = AgentStates.dead
+            self.world.kill_agent(self)
+            return
+        
+        elif len(hunters) == 0:
+            self.no_pred_count = min(self.no_pred_count+1, self.no_pred_limit)
 
-            if len(hunters) == 0:
-                self.no_pred_count += 1
+        else:
+            self.no_pred_count = 0
+
+        for agent in hunters:
+            self.emotion_quality = self.emotion_quality_lo_limit
+            self.emotion_intensity = self.emotion_intensity_hi_limit
+            if any(agent.dir_vector*-1 == self.dir_vector):
+                self.dir_vector = agent.dir_vector
             else:
-                self.no_pred_count = 0
+                self.dir_vector = agent.dir_vector*-1
 
-            for agent in hunters:
-                self.emotion_quality = self.emotion_quality_lo_limit
-                self.emotion_intensity = self.emotion_intensity_hi_limit
+        for agent in preys:
+            if agent.state == AgentStates.flee:
+                self.emotion_quality = max(
+                    self.emotion_quality-1, self.emotion_quality_lo_limit)
+                self.emotion_intensity = min(
+                    self.emotion_intensity+1, self.emotion_intensity_hi_limit)
+            else:
+                self.emotion_quality = max(
+                    self.emotion_quality+1, self.emotion_quality_hi_limit)
 
-                if any(agent.dir_vector*-1 == self.dir_vector):
-                    self.dir_vector = agent.dir_vector
-                else:
-                    self.dir_vector = agent.dir_vector*-1
+        if self.no_pred_count == self.no_pred_limit:
+            self.emotion_quality = 1
+            self.emotion_intensity = 1
 
-            for agent in preys:
-                if agent.state == AgentStates.flee:
-                    self.emotion_quality = max(
-                        self.emotion_quality-1, self.emotion_quality_lo_limit)
-                    self.emotion_intensity = min(
-                        self.emotion_intensity+1, self.emotion_intensity_hi_limit)
-                else:
-                    self.emotion_quality = max(
-                        self.emotion_quality+1, self.emotion_quality_hi_limit)
+        if self.emotion_quality < 0:
+            self.state = AgentStates.flee
 
-            if self.no_pred_count == 10:
-                self.emotion_quality = 1
-                self.emotion_intensity = 1
-
-            if self.emotion_quality < 0:
-                self.state = AgentStates.flee
-
-            if self.emotion_quality > 1:
-                self.state = AgentStates.wander
+        if self.emotion_quality >= 1:
+            self.state = AgentStates.wander
