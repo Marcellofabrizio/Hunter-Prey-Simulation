@@ -98,13 +98,16 @@ class Hunter(Agent):
                         "trace": self.world.get_trace_value(pos),
                         "pos": pos
                     })
+
             traces.sort(key=lambda x: x["trace"], reverse=True)
             most_recent_trace = traces[0]
+            print(most_recent_trace)
+            
             if most_recent_trace["trace"] > 0:
                 new_pos = most_recent_trace["pos"]
             else:
-                new_dir = random.choice(self.possible_moves)
-                new_pos = self.pos + new_dir
+                self.dir_vector = random.choice(self.possible_moves)
+                new_pos = self.pos + self.dir_vector
 
         else:
             if self.move_counter >= self.move_limit: 
@@ -114,6 +117,7 @@ class Hunter(Agent):
             new_pos = self.pos + self.dir_vector
 
         if not self.world.is_free(new_pos):
+            self.dir_vector = random.choice(self.possible_moves)
             return False
 
         self.move_counter += 1
@@ -175,8 +179,10 @@ class Prey(Agent):
             new_pos = self.pos + self.dir_vector
 
         if not self.world.is_free(new_pos):
+            self.dir_vector = random.choice(self.possible_moves)
             return False
 
+        self.world.set_trace_value(new_pos, 10)
         self.move_counter += 1
         self.pos = self.world.get_env_pos(new_pos)
         self.check_surroundings()

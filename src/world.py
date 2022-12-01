@@ -122,7 +122,7 @@ class World():
                     self.trace_array[x, y] = self.trace_array[x, y] - 1
 
     def kill_agent(self, agent):
-        print("The hunter feasts uppon the flesh. Blood for the Blood god")
+        print("Prey Killed")
         self.env_array[agent.pos] = None
         self.agents.remove(agent)
 
